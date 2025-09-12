@@ -1,0 +1,79 @@
+schema_version: 1
+
+context:
+  pyproject: ${{ load_from_file("../pyproject.toml") }}
+  name: ${{ load_from_file("../pyproject.toml").project.name }}
+  description: ${{ load_from_file("../pyproject.toml").project.description }}
+  version: ${{ env.get('SETUPTOOLS_SCM_PRETEND_VERSION', default="0.0.0.dev") }}
+  home: ${{ load_from_file("../pyproject.toml").project.urls.Homepage }}
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  git: ..
+
+build:
+  number: 0
+  string: py${{ PY_VER }}
+  script:
+    - ${{PYTHON}} -m pip install . --no-deps --ignore-installed --no-build-isolation -vv
+
+requirements:
+  host:
+    - python
+    - pip
+    - nanobind-abi
+    - nanobind
+    - scikit-build-core
+    - setuptools-scm
+  build:
+    - ${{ compiler("cxx") }}
+    - python
+    - scikit-build-core
+    - setuptools-scm
+    - scipy
+    - make
+    - cmake
+    - ninja
+    - nanobind
+    - embree
+    - llvm-openmp
+    - tbb
+    - tbb-devel
+  run:
+    - python
+    - openalea.plantgl
+    - nanobind
+    - pandas
+    - openpyxl
+    - matplotlib
+    - scipy
+    - embree
+
+tests:
+  - python:
+      imports:
+        - openalea.spice
+        - openalea.spice.common
+        - openalea.spice.energy
+        - openalea.spice.loader
+        - openalea.spice.reader
+        - openalea.spice.simulator
+  - files:
+      source:
+        - tests/**
+    requirements:
+      run:
+        - openalea.plantgl
+        - pytest
+    script:
+      - pytest -v
+
+about:
+  description: ${{ description }}
+  summary: ${{ description }}
+  license: ${{ load_from_file("../pyproject.toml").project.license }}
+  homepage: ${{ home }}
+
