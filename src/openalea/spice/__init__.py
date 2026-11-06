@@ -1,5 +1,6 @@
+from importlib.metadata import PackageNotFoundError, version
+
 from openalea.spice import *
-from importlib.metadata import version, PackageNotFoundError
 
 try:
     from openalea.spice.libspice import *

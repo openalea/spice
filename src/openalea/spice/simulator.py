@@ -2,24 +2,24 @@ import os
 import random
 import sys
 import time
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from collections import Counter
 
 import matplotlib
 import matplotlib.pyplot as plt
-
 from openalea.spice.libspice import (
-    Render,
-    visualizeSensorsPhotonMap,
-    visualizePhotonMap,
+    Camera,
+    Image,
     PhotonMapping,
+    Render,
+    Scene,
     UniformSampler,
     Vec3,
-    Scene,
-    Image,
-    Camera,
+    visualizePhotonMap,
+    visualizeSensorsPhotonMap,
 )
+
 try:
     from openalea.lpy import Lsystem
 except ImportError:
@@ -27,12 +27,12 @@ except ImportError:
 
 import openalea.plantgl.all as pgl
 
-from openalea.spice.energy import calculate_energy, correct_energy
-from openalea.spice.loader import load_sensor, load_environment
-from openalea.spice.loader.load_sensor import Sensor
-from openalea.spice.reader import read_properties, read_rad_geo
 from openalea.spice.common.math import denormalize
 from openalea.spice.configuration import Configuration
+from openalea.spice.energy import calculate_energy, correct_energy
+from openalea.spice.loader import load_environment, load_sensor
+from openalea.spice.loader.load_sensor import Sensor
+from openalea.spice.reader import read_properties, read_rad_geo
 
 
 @dataclass
@@ -105,7 +105,7 @@ class SimulationResult:
         """
         _, ax = plt.subplots(figsize=(12, 8))
         for wavelength_measured in self.N_sim_face_sensor:
-            str_keys = [str(key) for key in wavelength_measured.keys()]
+            str_keys = [str(key) for key in wavelength_measured]
             plt.bar(str_keys, wavelength_measured.values(), color="g", width=0.2)
         ax.set_xlabel("Shape id")
         ax.set_ylabel("Number of photons")
@@ -120,7 +120,7 @@ class SimulationResult:
         """
         _, ax = plt.subplots()
         for wavelength_measured in self.N_sim_virtual_sensor:
-            str_keys = [str(key) for key in wavelength_measured.keys()]
+            str_keys = [str(key) for key in wavelength_measured]
             plt.bar(str_keys, wavelength_measured.values(), color="g", width=0.2)
         ax.set_xlabel("Sensor id")
         ax.set_ylabel("Number of photons")
@@ -233,7 +233,9 @@ class Simulator:
         # add object to scene
         self.scene_pgl.add(sh)
 
-    def addPointLight(self, position, intensity, color=Vec3(1, 1, 1)):
+    def addPointLight(self, position, intensity, color=None):
+        if color is None:
+            color = Vec3(1, 1, 1)
         self.scene.addPointLight(position, intensity, color)
         self.list_light.append(
             {
@@ -243,7 +245,9 @@ class Simulator:
             }
         )
 
-    def addSpotLight(self, position, intensity, direction, angle, color=Vec3(1, 1, 1)):
+    def addSpotLight(self, position, intensity, direction, angle, color=None):
+        if color is None:
+            color = Vec3(1, 1, 1)
         self.scene.addSpotLight(position, intensity, color, direction, angle)
         self.list_light.append(
             {
@@ -584,7 +588,7 @@ class Simulator:
 
             norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
             for sh in self.scene_pgl:
-                if sh.id in self.N_sim_face_sensor[wavelength_index].keys():
+                if sh.id in self.N_sim_face_sensor[wavelength_index]:
                     color = cmap(norm(self.N_sim_face_sensor[wavelength_index][sh.id]))
                     sh.appearance = pgl.Material(
                         pgl.Color3(
@@ -604,10 +608,9 @@ class Simulator:
 
             norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
             for sh in self.scene_pgl:
-                if sh.id in shape_to_id.keys():
-                    if (
+                if sh.id in shape_to_id and (
                         shape_to_id[sh.id]
-                        in self.N_sim_virtual_sensor[wavelength_index].keys()
+                        in self.N_sim_virtual_sensor[wavelength_index]
                     ):
                         color = cmap(
                             norm(
@@ -628,8 +631,8 @@ class Simulator:
             pgl.Viewer.display(self.scene_pgl)
             return None
         elif mode == "oawidgets":
-            from openalea.widgets.plantgl import PlantGL
             import k3d
+            from openalea.widgets.plantgl import PlantGL
 
             plot = PlantGL(self.scene_pgl, side="double")
             plot.grid_visible = False
@@ -688,7 +691,6 @@ class Simulator:
                 light_id = phmap.getIthPhoton(i).lightId
                 photons.append(((photon[0], photon[1], photon[2]), light_id))
         if mode == "oawidgets":
-            from openalea.widgets.plantgl import PlantGL
             import k3d
             from k3d.colormaps import matplotlib_color_maps
 
@@ -774,7 +776,6 @@ class Simulator:
             pgl.Viewer.display(ph_sc)
             return None
         elif mode == "oawidgets":
-            from openalea.widgets.plantgl import PlantGL
             import k3d
             from k3d.colormaps import matplotlib_color_maps
 
@@ -792,8 +793,7 @@ class Simulator:
             plot = self.visualizeScene("oawidgets")
             plot.grid_visible = False
             plot += points
-            i = 0
-            for light in self.list_light:
+            for i, light in enumerate(self.list_light):
                 pos = light["position"]
                 pos = (pos[0], pos[1], pos[2])
                 light_point = k3d.points(
@@ -804,7 +804,6 @@ class Simulator:
                 light_label = k3d.label(text=f"light n°{i}", position=pos)
 
                 plot += light_point + light_label
-                i += 1
             plot.camera_reset()
             return plot
         else:
@@ -1135,7 +1134,7 @@ class Simulator:
 
         self.scene.setupTriangles()
 
-    def setupRender(self, lookfrom=Vec3(0, 0, 0), lookat=Vec3(0, 0, 0), vfov=50.0):
+    def setupRender(self, lookfrom=None, lookat=None, vfov=50.0):
         """
         Enable the capacity to render an image of the scene.
 
@@ -1149,6 +1148,11 @@ class Simulator:
             The vertical field of view of the camera
 
         """
+        if lookfrom is None:
+            lookfrom = Vec3(0,0,0)
+        if lookat is None:
+            lookat = Vec3(0,0,0)
+
         self.configuration.RENDERING = True
         # using for render the results
         self.camera = self.initCameraRender(lookfrom, lookat, vfov)
@@ -1186,7 +1190,7 @@ class Simulator:
                     sensor_id += 1
 
     def addFaceSensorsFromLpyFile(
-        self, plant_file: str, plant_pos=Vec3(0, 0, 0), derivation_length=None
+        self, plant_file: str, plant_pos=None, derivation_length=None
     ):
         """
         Set up a plant in the simulation. Enable the capacity to run the
@@ -1202,7 +1206,8 @@ class Simulator:
         derivation_length: int
             The number of iteration to interpret the plant
         """
-
+        if plant_pos is None:
+            plant_pos = Vec3(0,0,0)
         lsystem = Lsystem(plant_file)
         if derivation_length is None:
             derivation_length = lsystem.derivationLength
@@ -1221,7 +1226,7 @@ class Simulator:
             self.addFaceSensorToScene(mesh, position, scale_factor)
 
     @staticmethod
-    def initCameraRender(lookfrom=Vec3(0, 0, 0), lookat=Vec3(0, 0, 0), vfov=50.0):
+    def initCameraRender(lookfrom=None, lookat=None, vfov=50.0):
         """
         Init the camera to render image. Called by the function setupRender
 
@@ -1239,6 +1244,10 @@ class Simulator:
         camera: spice.Camera
             An object with all the information of camera
         """
+        if lookfrom is None:
+            lookfrom = Vec3(0,0,0)
+        if lookat is None:
+            lookat = Vec3(0,0,0)
 
         aspect_ratio = 16.0 / 9.0
 

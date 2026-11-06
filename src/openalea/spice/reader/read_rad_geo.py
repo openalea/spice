@@ -96,29 +96,7 @@ def read_rad(file: Path, scale_factor: float, invert_normals: bool):
                 name = li[2].strip("\n")
                 # print("material name: " + str(name))
                 if materials.get(name) is None:
-                    if type == "plastic":
-                        li = lines[i + 4].split(None)
-                        color = Color3(
-                            denormalize(float(li[0])),
-                            denormalize(float(li[1])),
-                            denormalize(float(li[2])),
-                        )
-                        spec = Color3(
-                            denormalize(float(li[3])),
-                            denormalize(float(li[3])),
-                            denormalize(float(li[3])),
-                        )
-                        roughness = float(li[4])
-                        mat = {
-                            "name": name,
-                            "type": type,
-                            "color": color,
-                            "spec": spec,
-                            "roughness": roughness,
-                        }
-                        materials[name] = mat
-                        i += 5
-                    elif type == "metal":
+                    if type == "plastic" or type == "metal":
                         li = lines[i + 4].split(None)
                         color = Color3(
                             denormalize(float(li[0])),
@@ -188,12 +166,12 @@ def read_rad(file: Path, scale_factor: float, invert_normals: bool):
                         if type in ("point_light", "point"):
                             i += 1
                             vert = []
-                            l = re.split(r"\s+|;+", lines[i])
+                            line = re.split(r"\s+|;+", lines[i])
                             vert.append(
                                 (
-                                    float(l[0]) / scale_factor,
-                                    float(l[1]) / scale_factor,
-                                    float(l[2]) / scale_factor,
+                                    float(line[0]) / scale_factor,
+                                    float(line[1]) / scale_factor,
+                                    float(line[2]) / scale_factor,
                                 )
                             )
                             shapes[name] = {
@@ -209,15 +187,15 @@ def read_rad(file: Path, scale_factor: float, invert_normals: bool):
                             tmp = i + 1
                             nbCoords = int(size / 3)
                             if type == "cylinder":
-                                l = re.split(r"\s+|;+", lines[i + 1])
+                                l1 = re.split(r"\s+|;+", lines[i + 1])
                                 l2 = re.split(r"\s+|;+", lines[i + 2])
                                 l3 = re.split(r"\s+|;+", lines[i + 3])
                                 r = float(l3[0]) / scale_factor
 
                                 x, y, z = (
-                                    float(l[0]) / scale_factor,
-                                    float(l[1]) / scale_factor,
-                                    float(l[2]) / scale_factor,
+                                    float(l1[0]) / scale_factor,
+                                    float(l1[1]) / scale_factor,
+                                    float(l1[2]) / scale_factor,
                                 )
                                 x2, y2, z2 = (
                                     float(l2[0]) / scale_factor,
@@ -237,16 +215,16 @@ def read_rad(file: Path, scale_factor: float, invert_normals: bool):
                                 }
                                 i += 3
                             elif type == "cone":
-                                l = re.split(r"\s+|;+", lines[i + 1])
+                                l1 = re.split(r"\s+|;+", lines[i + 1])
                                 l2 = re.split(r"\s+|;+", lines[i + 2])
                                 l3 = re.split(r"\s+|;+", lines[i + 3])
                                 r = float(l3[0]) / scale_factor
                                 r2 = float(l3[1]) / scale_factor
 
                                 x, y, z = (
-                                    float(l[0]) / scale_factor,
-                                    float(l[1]) / scale_factor,
-                                    float(l[2]) / scale_factor,
+                                    float(l1[0]) / scale_factor,
+                                    float(l1[1]) / scale_factor,
+                                    float(l1[2]) / scale_factor,
                                 )
                                 x2, y2, z2 = (
                                     float(l2[0]) / scale_factor,
@@ -264,13 +242,12 @@ def read_rad(file: Path, scale_factor: float, invert_normals: bool):
                                 newCone.apply(ts)
                                 mesh = ts.result
                                 maxi = 0
-                                for i in range(0, mesh.indexListSize()):
+                                for i in range(mesh.indexListSize()):
                                     index = mesh.indexAt(i)
                                     typeF = mesh.faceSize(i)
-                                    for j in range(0, typeF):
-                                        if index[j] > maxi:
-                                            maxi = index[j]
-                                for u in range(0, maxi + 1):
+                                    for j in range(typeF):
+                                        maxi = max(maxi, index[j])
+                                for u in range(maxi + 1):
                                     mvector = mesh.pointAt(u)
                                     mesh.pointList[u] = (
                                         mvector[0] / 10 + pos[0],
@@ -288,12 +265,12 @@ def read_rad(file: Path, scale_factor: float, invert_normals: bool):
                                 i += 3
                             else:
                                 for j in range(tmp, tmp + nbCoords):
-                                    l = re.split(r"\s+|;+", lines[j])
+                                    line = re.split(r"\s+|;+", lines[j])
                                     vert.append(
                                         (
-                                            float(l[0]) / scale_factor,
-                                            float(l[1]) / scale_factor,
-                                            float(l[2]) / scale_factor,
+                                            float(line[0]) / scale_factor,
+                                            float(line[1]) / scale_factor,
+                                            float(line[2]) / scale_factor,
                                         )
                                     )
                                     i = j

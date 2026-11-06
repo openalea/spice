@@ -1,4 +1,5 @@
 #include "image.hpp"
+#include <fstream>
 
 Image::Image(unsigned int width, unsigned int height)
   : width(width)

@@ -2,7 +2,7 @@ from math import cos, sin
 
 from openalea.plantgl.all import Color3, Material, Scene, Shape, TriangleSet
 
-from openalea.spice import VectorFloat, VectorUint, Vec3
+from openalea.spice import Vec3, VectorFloat, VectorUint
 from openalea.spice.common.tools import flatten
 
 # Objectif of this module is adding sensors to the scene of photon mapping to the received energy
@@ -38,7 +38,10 @@ class Sensor:
 
     """
 
-    def __init__(self, shape, sensor_type, position=Vec3(0, 0, 0), scale_factor=1):
+    def __init__(self, shape, sensor_type, position=None, scale_factor=1):
+        if position is None:
+            position = Vec3(0,0,0)
+
         self.zNormal = None
         self.yNormal = None
         self.xNormal = None
@@ -294,10 +297,8 @@ def addVirtualSensors(scene, virtual_sensor_triangle_dict, list_virtual_sensor):
             return
 
         vertices, triangles, normals = sensor.getGeometry()
-        #
         scene.addVirtualSensorInfos(vertices, triangles, normals)
 
-        #
         for j in triangles:
             virtual_sensor_triangle_dict[lastTriangleId + j] = sensor.sensor_id
 
@@ -332,7 +333,6 @@ def addFaceSensors(scene, face_sensor_triangle_dict, list_face_sensor):
 
         vertices, triangles, normals = sensor.getGeometry()
         refl, specular, trans, roughness = sensor.getOpticalProperties()
-        #
         scene.addFaceSensorInfos(
             vertices,
             triangles,
@@ -343,7 +343,6 @@ def addFaceSensors(scene, face_sensor_triangle_dict, list_face_sensor):
             trans,
             roughness,
         )
-        #
         for j in triangles:
             face_sensor_triangle_dict[lastTriangleId + j] = sensor.sensor_id
 

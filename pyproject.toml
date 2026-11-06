@@ -74,7 +74,8 @@ dependencies = [
     "embree",
     "llvm-openmp",
     "tbb",
-    "tbb-devel"
+    "tbb-devel",
+    "libtinyobjloader",
 ]
 
 [tool.setuptools_scm]

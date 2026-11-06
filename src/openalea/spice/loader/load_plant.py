@@ -1,14 +1,8 @@
 try:
     from openalea.lpy import Lsystem
-except:
+except ImportError:
     pass
 
-from openalea.spice import (
-    Vec3,
-    VectorFloat,
-    VectorUint,
-)
-from openalea.spice.common.tools import flatten
 from openalea.plantgl.all import (
     Color3,
     Material,
@@ -18,6 +12,13 @@ from openalea.plantgl.all import (
     TriangleSet,
     Vector3,
 )
+
+from openalea.spice import (
+    Vec3,
+    VectorFloat,
+    VectorUint,
+)
+from openalea.spice.common.tools import flatten
 
 # Objective of this module is adding plants to the scene of Photon Mapping to calculate the received energy
 # Data is located in this directory: ./assets
@@ -87,18 +88,17 @@ def addPlantModel(lscene, tr, tr2shmap, sc, anchor, scale_factor):
         normals = VectorFloat([])
         ind = []
         maxi = 0
-        for i in range(0, index_list_size):
+        for i in range(index_list_size):
             index = mesh.indexAt(i)
             type_f = mesh.faceSize(i)
-            for j in range(0, type_f):
-                if index[j] > maxi:
-                    maxi = index[j]
-        for k in range(0, maxi + 1):
+            for j in range(type_f):
+                maxi = max(maxi, index[j])
+        for k in range(maxi + 1):
             mvector = mesh.pointAt(k)
             vertices.append(mvector[0] / (scale_factor / 10) + anchor[0])
             vertices.append(mvector[1] / (scale_factor / 10) + anchor[1])
             vertices.append(mvector[2] / (scale_factor / 10) + anchor[2])
-        for k in range(0, maxi + 1):
+        for k in range(maxi + 1):
             nvector = mesh.normalAt(k)
             normals.append(nvector[0])
             normals.append(nvector[1])
@@ -188,13 +188,12 @@ def addPlantModelPgl(lscene, tr, sc, anchor, scale_factor, shenergy: dict):
         index_list_size = mesh.indexListSize()
         vertices = []
         maxi = 0
-        for i in range(0, index_list_size):
+        for i in range(index_list_size):
             index = mesh.indexAt(i)
             type_f = mesh.faceSize(i)
-            for j in range(0, type_f):
-                if index[j] > maxi:
-                    maxi = index[j]
-        for k in range(0, maxi + 1):
+            for j in range(type_f):
+                maxi = max(maxi, index[j])
+        for k in range(maxi + 1):
             mvector = mesh.pointAt(k)
             vertices.append(
                 Vector3(

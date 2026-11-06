@@ -45,8 +45,7 @@ def setup_dataset_materials(w_start: int, w_end: int, op_dir: Path):
 
         if os.path.exists(dir_path_reflect):
             for path in os.listdir(dir_path_reflect):
-                if os.path.isfile(os.path.join(dir_path_reflect, path)):
-                    if not path.startswith("."):
+                if os.path.isfile(os.path.join(dir_path_reflect, path)) and not path.startswith("."):
                         files.append(path)
             for file in files:
                 mat_name = file.split(".")[0]
@@ -66,8 +65,7 @@ def setup_dataset_materials(w_start: int, w_end: int, op_dir: Path):
 
         if os.path.exists(dir_path_transmit):
             for path in os.listdir(dir_path_transmit):
-                if os.path.isfile(os.path.join(dir_path_transmit, path)):
-                    if not path.startswith("."):
+                if os.path.isfile(os.path.join(dir_path_transmit, path)) and not path.startswith("."):
                         files.append(path)
             for file in files:
                 mat_name = file.split(".")[0]

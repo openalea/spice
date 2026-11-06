@@ -1,10 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 project(photon_mapping LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 
 option(BUILD_TESTS "build c++ tests" OFF)
 option(BUILD_CXX_EXAMPLE "build c++ example" OFF)
+
+option(HIP "GPU support with HIP" OFF)
+
+# --- Setting flags
+if(NOT WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+endif()
 
 # --- Build setup
 find_package(TBB CONFIG REQUIRED)
@@ -18,6 +25,7 @@ endif()
 # apple newer C++ features with old SDK
 if(APPLE)
     set(CMAKE_CXX_FLAGS "${CXXFLAGS} -D_LIBCPP_DISABLE_AVAILABILITY")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13")
 endif()
 
 # Embree4
@@ -29,9 +37,28 @@ else()
   message(FATAL_ERROR "Could not find Embree")
 endif()
 
+# find tinyobjloader & tinygltf
 
-# externals
-add_subdirectory("externals")
+find_package(tinyobjloader REQUIRED)
+### NOTE: tinygltf on conda is only the .h file so 
+### it cannot be found with cmake find_package
+
+# find_package(tinygltf REQUIRED)
+include(FetchContent)
+
+set(TINYGLTF_BUILD_EXAMPLES OFF CACHE INTERNAL "") 
+
+FetchContent_Declare(
+    tinygltf
+    GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+    GIT_TAG        v2.9.7
+)
+
+FetchContent_MakeAvailable(tinygltf)
+
+if(HIP)
+    find_package(hiprt CONFIG REQUIRED)
+endif()
 
 add_subdirectory("src/cpp/include")
 
@@ -41,13 +68,13 @@ add_library(pm INTERFACE src/python/ext_photonmapping_nano.cpp)
 
 set_target_properties(pm
         PROPERTIES
-        CXX_STANDARD 23
+        CXX_STANDARD 26
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS YES
         )
 
 
-target_link_libraries(pm INTERFACE TBB::tbb OpenMP::OpenMP_CXX tinyobjloader embree Threads::Threads photon_map primitive triangle image)
+target_link_libraries(pm INTERFACE TBB::tbb OpenMP::OpenMP_CXX embree Threads::Threads photon_map primitive triangle image)
 
 # wrapper
 add_subdirectory("src/python/")

@@ -37,6 +37,7 @@ A set of examples can be found in the [`./examples/python`](./examples/python) d
 
 * [Embree](https://github.com/embree/embree)
 * [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
+* [tinygltf](https://github.com/syoyo/tinygltf)
 
 ## Authors
 This project was originally developed by [YumcyaWiz](https://github.com/yumcyaWiz/) (Kenta Eto). Main extension were developed by Aurélien Besnier and Nguyen Tuan Minh with contribution of J. Bertheloot, F. Boudon, T. Arsouze, E. Faure.

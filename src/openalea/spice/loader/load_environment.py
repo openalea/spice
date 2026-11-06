@@ -1,5 +1,7 @@
 import re
 
+from openalea.plantgl.all import Color3, Scene, Text
+
 from openalea.spice import (
     Vec3,
     VectorFloat,
@@ -7,7 +9,6 @@ from openalea.spice import (
 )
 from openalea.spice.common.math import average_vector, geo_hemisphere
 from openalea.spice.common.tools import flatten, wavelength2rgb
-from openalea.plantgl.all import Color3, Scene, Text
 
 # Objective of this module is adding environment object to the scene of Photon Mapping
 

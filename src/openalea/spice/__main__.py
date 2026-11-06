@@ -1,6 +1,7 @@
 import argparse
-from openalea.spice.simulator import Simulator
+
 from openalea.spice.configuration import Configuration
+from openalea.spice.simulator import Simulator
 
 
 def main():
