@@ -785,7 +785,7 @@ class Simulator:
             points = k3d.points(
                 positions,
                 point_size=1 * self.configuration.SCALE_FACTOR,
-                shader="3d",
+                shader="dot",
                 attribute=lights,
                 color_map=matplotlib_color_maps.Rainbow,
                 color_range=[0, n_light],
