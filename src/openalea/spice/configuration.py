@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
@@ -102,3 +102,10 @@ class Configuration:
                             self.DIVIDED_SPECTRAL_RANGE.append(
                                 {"start": start, "end": end}
                             )
+
+
+    def dumps(self) -> dict:
+        return asdict(self)
+
+    def __str__(self) -> str:
+        return str(self.dumps())
