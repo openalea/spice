@@ -46,12 +46,12 @@ find_package(tinyobjloader REQUIRED)
 # find_package(tinygltf REQUIRED)
 include(FetchContent)
 
-set(TINYGLTF_BUILD_EXAMPLES OFF CACHE INTERNAL "") 
+set(TINYGLTF3_BUILD_TESTS OFF CACHE INTERNAL "") 
 
 FetchContent_Declare(
     tinygltf
     GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
-    GIT_TAG        v2.9.7
+    GIT_TAG        v3.1.0
 )
 
 FetchContent_MakeAvailable(tinygltf)
@@ -63,8 +63,9 @@ endif()
 add_subdirectory("src/cpp/include")
 
 # pm(photon_mapping)
-add_library(pm INTERFACE src/python/ext_photonmapping_nano.cpp)
+add_library(pm INTERFACE src/python/ext_photonmapping_nano.cpp ${tinygltf_SOURCE_DIR}/tiny_gltf_v3.c)
 # target_include_directories(pm INTERFACE "src/cpp/include")
+target_include_directories(pm INTERFACE ${tinygltf_SOURCE_DIR})
 
 set_target_properties(pm
         PROPERTIES
